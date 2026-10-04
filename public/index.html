@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>StudyBuddy</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            text-align: center;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #555;
+        }
+
+        .app {
+            max-width: 650px;
+            margin: 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        input {
+            padding: 12px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            margin: 5px;
+        }
+
+        ul {
+            padding: 0;
+        }
+
+        li {
+            list-style: none;
+            background: #f7f7f7;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        li button {
+            float: right;
+        }
+
+        #piano {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f7f7f7;
+            border-radius: 15px;
+        }
+
+        .xp-box {
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 15px;
+        }
+
+        .streak-box {
+            margin: 20px 0;
+            padding: 20px;
+            background: #ffe8e8;
+            border-radius: 15px;
+        }
+
+        .missione-box {
+            margin: 20px 0;
+            padding: 20px;
+            background: #e8f4ff;
+            border-radius: 15px;
+        }
+
+        .badge-box {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f1e8ff;
+            border-radius: 15px;
+        }
+
+        .badge {
+            display: inline-block;
+            margin: 6px;
+            padding: 12px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #ddd;
+        }
+
+        .bloccato {
+            opacity: 0.35;
+        }
+
+        .barra {
+            height: 20px;
+            background: #ddd;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        #progresso {
+            height: 100%;
+            width: 0%;
+            background: #4caf50;
+            transition: width 0.3s;
+        }
+
+        #progressoMissione {
+            height: 100%;
+            width: 0%;
+            background: #2196f3;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <h1>StudyBuddy 📚</h1>
+
+    <p>Organizza i tuoi compiti!</p>
+
+    <!-- XP -->
+
+    <div class="xp-box">
+
+        <h2>
+            🏆 Livello
+            <span id="livello">1</span>
+        </h2>
+
+        <p>
+            ⭐ <span id="xp">0</span> XP
+        </p>
+
+        <div class="barra">
+            <div id="progresso"></div>
+        </div>
+
+        <p id="prossimoLivello">
+            50 XP al prossimo livello
+        </p>
+
+    </div>
+
+
+    <!-- STREAK -->
+
+    <div class="streak-box">
+
+        <h2>
+            🔥 Streak:
+            <span id="streak">0</span> giorni
+        </h2>
+
+        <p id="streakMessaggio">
+            Completa un compito oggi!
+        </p>
+
+    </div>
+
+
+    <!-- MISSIONE -->
+
+    <div class="missione-box">
+
+        <h2>🎯 Missione giornaliera</h2>
+
+        <p>
+            Completa 3 compiti oggi
+        </p>
+
+        <p>
+            📚 <span id="compitiOggi">0</span> / 3
+        </p>
+
+        <div class="barra">
+            <div id="progressoMissione"></div>
+        </div>
+
+        <p id="missioneMessaggio">
+            Ricompensa: ⭐ +20 XP
+        </p>
+
+    </div>
+
+
+    <!-- BADGE -->
+
+    <div class="badge-box">
+
+        <h2>🏅 I tuoi badge</h2>
+
+        <div id="badgeLista"></div>
+
+    </div>
+
+
+    <!-- INPUT -->
+
+    <input
+        id="compito"
+        type="text"
+        placeholder="Scrivi un argomento da studiare"
+    >
+
+    <input
+        id="materia"
+        type="text"
+        placeholder="Materia"
+    >
+
+    <input
+        id="scadenza"
+        type="date"
+    >
+
+    <br>
+
+    <button onclick="aggiungiCompito()">
+        ➕ Aggiungi
+    </button>
+
+    <button onclick="creaPiano()">
+        ✨ Crea piano di studio
+    </button>
+
+
+    <ul id="lista"></ul>
+
+    <div id="piano"></div>
+
+</div>
+
+
+<script>
+
+
+/* =========================
+   DATI
+========================= */
+
+let compiti =
+    JSON.parse(localStorage.getItem("compiti")) || [];
+
+let xp =
+    Number(localStorage.getItem("xp")) || 0;
+
+let streak =
+    Number(localStorage.getItem("streak")) || 0;
+
+let ultimoGiorno =
+    localStorage.getItem("ultimoGiorno") || "";
+
+let compitiOggi =
+    Number(localStorage.getItem("compitiOggi")) || 0;
+
+let giornoMissione =
+    localStorage.getItem("giornoMissione") || "";
+
+let missioneCompletata =
+    localStorage.getItem("missioneCompletata") === "true";
+
+
+/* =========================
+   DATA
+========================= */
+
+function ottieniDataOggi() {
+
+    let oggi = new Date();
+
+    return oggi.getFullYear() +
+        "-" +
+        String(oggi.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(oggi.getDate()).padStart(2, "0");
+}
+
+
+/* =========================
+   MISSIONE
+========================= */
+
+function controllaGiornoMissione() {
+
+    let oggi =
+        ottieniDataOggi();
+
+    if (giornoMissione !== oggi) {
+
+        compitiOggi = 0;
+
+        missioneCompletata = false;
+
+        giornoMissione = oggi;
+
+        localStorage.setItem(
+            "compitiOggi",
+            compitiOggi
+        );
+
+        localStorage.setItem(
+            "missioneCompletata",
+            missioneCompletata
+        );
+
+        localStorage.setItem(
+            "giornoMissione",
+            giornoMissione
+        );
+    }
+}
+
+
+function aggiornaMissione() {
+
+    controllaGiornoMissione();
+
+    document.getElementById("compitiOggi").textContent =
+        Math.min(compitiOggi, 3);
+
+    let percentuale =
+        Math.min(compitiOggi / 3, 1) * 100;
+
+    document.getElementById(
+        "progressoMissione"
+    ).style.width =
+        percentuale + "%";
+
+
+    if (missioneCompletata) {
+
+        document.getElementById(
+            "missioneMessaggio"
+        ).textContent =
+            "🎉 Missione completata! +20 XP";
+
+    } else {
+
+        let mancanti =
+            3 - compitiOggi;
+
+        document.getElementById(
+            "missioneMessaggio"
+        ).textContent =
+            "Ancora " +
+            mancanti +
+            " compiti — Ricompensa: ⭐ +20 XP";
+    }
+}
+
+
+function registraCompitoOggi() {
+
+    controllaGiornoMissione();
+
+    if (missioneCompletata) {
+        return;
+    }
+
+    compitiOggi++;
+
+    if (compitiOggi >= 3) {
+
+        compitiOggi = 3;
+
+        missioneCompletata = true;
+
+        xp += 20;
+
+        alert(
+            "🎉 Missione completata!\n\nHai guadagnato +20 XP!"
+        );
+    }
+
+    localStorage.setItem(
+        "compitiOggi",
+        compitiOggi
+    );
+
+    localStorage.setItem(
+        "missioneCompletata",
+        missioneCompletata
+    );
+
+    aggiornaMissione();
+
+    aggiornaXP();
+}
+
+
+/* =========================
+   XP
+========================= */
+
+function aggiornaXP() {
+
+    let livello =
+        Math.floor(xp / 50) + 1;
+
+    let xpNelLivello =
+        xp % 50;
+
+    let percentuale =
+        (xpNelLivello / 50) * 100;
+
+    document.getElementById("livello").textContent =
+        livello;
+
+    document.getElementById("xp").textContent =
+        xp;
+
+    document.getElementById("progresso").style.width =
+        percentuale + "%";
+
+    let mancanti =
+        50 - xpNelLivello;
+
+    document.getElementById("prossimoLivello").textContent =
+        mancanti + " XP al prossimo livello";
+
+    localStorage.setItem(
+        "xp",
+        xp
+    );
+
+    aggiornaBadge();
+}
+
+
+/* =========================
+   STREAK
+========================= */
+
+function aggiornaStreak() {
+
+    let oggi =
+        ottieniDataOggi();
+
+    if (ultimoGiorno === "") {
+
+        streak = 0;
+
+    } else {
+
+        let ultimaData =
+            new Date(ultimoGiorno);
+
+        let dataOggi =
+            new Date(oggi);
+
+        let differenza =
+            Math.floor(
+                (dataOggi - ultimaData)
+                / (1000 * 60 * 60 * 24)
+            );
+
+        if (differenza > 1) {
+
+            streak = 0;
+
+            localStorage.setItem(
+                "streak",
+                streak
+            );
+        }
+    }
+
+    document.getElementById("streak").textContent =
+        streak;
+
+
+    if (streak === 0) {
+
+        document.getElementById(
+            "streakMessaggio"
+        ).textContent =
+            "Completa un compito oggi!";
+
+    } else {
+
+        document.getElementById(
+            "streakMessaggio"
+        ).textContent =
+            "Continua così! Non interrompere la streak 🔥";
+    }
+}
+
+
+function registraAttivitaOggi() {
+
+    let oggi =
+        ottieniDataOggi();
+
+    if (ultimoGiorno === oggi) {
+
+        return;
+    }
+
+    if (ultimoGiorno === "") {
+
+        streak = 1;
+
+    } else {
+
+        let ultimaData =
+            new Date(ultimoGiorno);
+
+        let dataOggi =
+            new Date(oggi);
+
+        let differenza =
+            Math.floor(
+                (dataOggi - ultimaData)
+                / (1000 * 60 * 60 * 24)
+            );
+
+        if (differenza === 1) {
+
+            streak++;
+
+        } else {
+
+            streak = 1;
+        }
+    }
+
+    ultimoGiorno = oggi;
+
+    localStorage.setItem(
+        "streak",
+        streak
+    );
+
+    localStorage.setItem(
+        "ultimoGiorno",
+        ultimoGiorno
+    );
+
+    aggiornaStreak();
+}
+
+
+/* =========================
+   BADGE
+========================= */
+
+function aggiornaBadge() {
+
+    let completati =
+        compiti.filter(function(compito) {
+            return compito.fatto;
+        }).length;
+
+
+    let badgeLista =
+        document.getElementById("badgeLista");
+
+    badgeLista.innerHTML = "";
+
+
+    let badge = [
+
+        {
+            nome: "🥉 Primo passo",
+            descrizione: "Completa 1 compito",
+            sbloccato: completati >= 1
+        },
+
+        {
+            nome: "📚 Studioso",
+            descrizione: "Completa 10 compiti",
+            sbloccato: completati >= 10
+        },
+
+        {
+            nome: "🔥 Costante",
+            descrizione: "Raggiungi 3 giorni di streak",
+            sbloccato: streak >= 3
+        },
+
+        {
+            nome: "🏆 Campione",
+            descrizione: "Raggiungi 100 XP",
+            sbloccato: xp >= 100
+        }
+
+    ];
+
+
+    badge.forEach(function(b) {
+
+        let elemento =
+            document.createElement("div");
+
+        elemento.className = "badge";
+
+
+        if (!b.sbloccato) {
+
+            elemento.classList.add(
+                "bloccato"
+            );
+        }
+
+
+        elemento.innerHTML =
+            "<strong>" +
+            b.nome +
+            "</strong><br>" +
+            "<small>" +
+            b.descrizione +
+            "</small>";
+
+
+        badgeLista.appendChild(
+            elemento
+        );
+    });
+}
+
+
+/* =========================
+   MOSTRA COMPITI
+========================= */
+
+function mostraCompiti() {
+
+    let lista =
+        document.getElementById("lista");
+
+    lista.innerHTML = "";
+
+
+    compiti.forEach(function(compito, indice) {
+
+        let nuovoCompito =
+            document.createElement("li");
+
+
+        nuovoCompito.textContent =
+            (compito.fatto ? "✅ " : "☐ ") +
+            compito.testo +
+            " | 📚 " +
+            compito.materia +
+            " | 📅 " +
+            compito.scadenza;
+
+
+        nuovoCompito.onclick =
+            function() {
+
+                if (compiti[indice].fatto === false) {
+
+                    compiti[indice].fatto = true;
+
+                    xp += 10;
+
+                    registraAttivitaOggi();
+
+                    registraCompitoOggi();
+
+                } else {
+
+                    compiti[indice].fatto = false;
+
+                    xp =
+                        Math.max(0, xp - 10);
+                }
+
+
+                localStorage.setItem(
+                    "compiti",
+                    JSON.stringify(compiti)
+                );
+
+                aggiornaXP();
+
+                aggiornaMissione();
+
+                mostraCompiti();
+            };
+
+
+        let elimina =
+            document.createElement("button");
+
+        elimina.textContent =
+            "❌";
+
+
+        elimina.onclick =
+            function(event) {
+
+                event.stopPropagation();
+
+
+                if (compiti[indice].fatto) {
+
+                    xp =
+                        Math.max(0, xp - 10);
+                }
+
+
+                compiti.splice(
+                    indice,
+                    1
+                );
+
+
+                localStorage.setItem(
+                    "compiti",
+                    JSON.stringify(compiti)
+                );
+
+
+                aggiornaXP();
+
+                mostraCompiti();
+            };
+
+
+        nuovoCompito.appendChild(
+            elimina
+        );
+
+        lista.appendChild(
+            nuovoCompito
+        );
+    });
+}
+
+
+/* =========================
+   AGGIUNGI COMPITO
+========================= */
+
+function aggiungiCompito() {
+
+    let testo =
+        document.getElementById(
+            "compito"
+        ).value;
+
+    let materia =
+        document.getElementById(
+            "materia"
+        ).value;
+
+    let scadenza =
+        document.getElementById(
+            "scadenza"
+        ).value;
+
+
+    if (testo === "") {
+
+        return;
+    }
+
+
+    compiti.push({
+
+        testo: testo,
+
+        materia: materia,
+
+        scadenza: scadenza,
+
+        fatto: false
+
+    });
+
+
+    localStorage.setItem(
+        "compiti",
+        JSON.stringify(compiti)
+    );
+
+
+    document.getElementById(
+        "compito"
+    ).value = "";
+
+    document.getElementById(
+        "materia"
+    ).value = "";
+
+    document.getElementById(
+        "scadenza"
+    ).value = "";
+
+
+    mostraCompiti();
+}
+
+
+/* =========================
+   🤖 PIANO DI STUDIO CON AI
+========================= */
+
+async function creaPiano() {
+
+    let materia =
+        document.getElementById("materia").value;
+
+    let testo =
+        document.getElementById("compito").value;
+
+    let piano =
+        document.getElementById("piano");
+
+
+    if (testo.trim() === "") {
+
+        piano.innerHTML =
+            "<h2>⚠️ Prima scrivi cosa devi studiare!</h2>";
+
+        return;
+    }
+
+
+    piano.innerHTML = `
+        <h2>🤖 StudyBuddy AI sta pensando...</h2>
+        <p>⏳ Sto preparando una spiegazione per te.</p>
+    `;
+
+
+    try {
+
+        let risposta = await fetch(
+            "http://localhost:3000/api/study",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    topic: testo,
+                    subject: materia
+                })
+            }
+        );
+
+
+        let dati = await risposta.json();
+
+
+        if (!risposta.ok) {
+
+            throw new Error(
+                dati.error || "Errore del server"
+            );
+        }
+
+
+        piano.innerHTML = `
+            <h2>🤖 StudyBuddy AI</h2>
+
+            <div style="
+                text-align: left;
+                white-space: pre-wrap;
+                line-height: 1.6;
+            ">
+                ${dati.answer}
+            </div>
+        `;
+
+
+    } catch (errore) {
+
+        console.error(errore);
+
+        piano.innerHTML = `
+            <h2>❌ Qualcosa è andato storto</h2>
+
+            <p>
+                Non riesco a collegarmi all'AI.
+                Controlla che il server StudyBuddy sia acceso.
+            </p>
+        `;
+    }
+}
+
+
+/* =========================
+   AVVIO
+========================= */
+
+controllaGiornoMissione();
+
+mostraCompiti();
+
+aggiornaStreak();
+
+aggiornaMissione();
+
+aggiornaXP();
+
+</script>
+
+</body>
+</html>
