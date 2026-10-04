@@ -856,7 +856,7 @@ async function creaPiano() {
     try {
 
         let risposta = await fetch(
-            "http://localhost:3000/api/study",
+            "/api/study",
             {
                 method: "POST",
 
@@ -905,7 +905,7 @@ async function creaPiano() {
 
             <p>
                 Non riesco a collegarmi all'AI.
-                Controlla che il server StudyBuddy sia acceso.
+                Controlla la connessione e riprova.
             </p>
         `;
     }
