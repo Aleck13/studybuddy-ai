@@ -10,39 +10,22 @@ const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
-
-// Permette al server di leggere JSON
 app.use(express.json());
 
-
-// Permette al server di mostrare i file dentro "public"
 app.use(express.static("public"));
 
-
-// =========================
-// 🤖 AI STUDYBUDDY
-// =========================
-
 app.post("/api/study", async (req, res) => {
-
     const { topic, subject } = req.body;
 
-
     if (!topic || !topic.trim()) {
-
         return res.status(400).json({
             error: "Inserisci un argomento da studiare."
         });
-
     }
 
-
     try {
-
         const response = await client.responses.create({
-
             model: "gpt-6-luna",
-
             input: `
 Sei StudyBuddy, un tutor scolastico amichevole.
 
@@ -78,36 +61,28 @@ Devi aiutare lo studente a imparare davvero.
 `
         });
 
-
         res.json({
             answer: response.output_text
         });
 
-
     } catch (error) {
-
         console.error(error);
 
         res.status(500).json({
             error: "Errore durante la comunicazione con l'AI."
         });
-
     }
-
 });
 
+export default app;
 
-// =========================
-// 🚀 AVVIO SERVER
-// =========================
-
-app.listen(3000, () => {
-
-    console.log("");
-    console.log("=================================");
-    console.log("🚀 StudyBuddy AI è ONLINE!");
-    console.log("🌐 http://localhost:3000");
-    console.log("=================================");
-    console.log("");
-
-});
+if (process.env.NODE_ENV !== "production") {
+    app.listen(3000, () => {
+        console.log("");
+        console.log("=================================");
+        console.log("🚀 StudyBuddy AI è ONLINE!");
+        console.log("🌐 http://localhost:3000");
+        console.log("=================================");
+        console.log("");
+    });
+}
